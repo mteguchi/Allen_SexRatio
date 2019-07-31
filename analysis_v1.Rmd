@@ -1,0 +1,13 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+Analysis of hormone data for olive ridleys in ETP
+
+```{r}
+dat.0 <- read.csv(file = "data/EPac_LO_v1.csv")
+
+summary(dat.0)
+```
+
