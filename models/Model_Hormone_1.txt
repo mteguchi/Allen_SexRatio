@@ -1,0 +1,37 @@
+#Model_Hormone_1.txt
+
+# Tomo Eguchi
+# 20 February 2015
+
+model {
+  # lab1
+  for (i in 1:N1){
+    Sex1[i] ~ dbern(p1[i])
+    logit(p1[i]) <- beta01 + beta_H1 * mu_H1[i] + beta_DOY1 * DOY1[i] + beta_SCL1 * SCL1[i]
+    for (j in 1:2){
+      H1[i,j] ~ dnorm(mu_H1[i], tau_H1)
+    }
+    mu_H1[i] ~ dnorm(0, 0.1)
+  }
+
+  # lab 2
+  for (i in 1:N2){
+    Sex2[i] ~ dbern(p2[i])
+    p2[i] <- ilogit(beta02 + beta_H2 * mu_H2[i] + beta_DOY2 * DOY2[i] + beta_SCL2 * SCL2[i])
+    for (j in 1:2){
+      H2[i,j] ~ dnorm(mu_H2[i], tau_H2)
+    }
+    mu_H2[i] ~ dnorm(0, 0.1)
+  }
+
+  tau_H1 ~ dgamma(0.1, 0.01)
+  tau_H2 ~ dgamma(0.1, 0.01)
+  beta01 ~ dnorm(0, 0.1)
+  beta02 ~ dnorm(0, 0.1)
+  beta_H1 ~ dnorm(0, 0.1)
+  beta_H2 ~ dnorm(0, 0.1)
+  beta_DOY1 ~ dnorm(0, 0.1)
+  beta_DOY2 ~ dnorm(0, 0.1)
+  beta_SCL1 ~ dnorm(0, 0.1)
+  beta_SCL2 ~ dnorm(0, 0.1)
+}

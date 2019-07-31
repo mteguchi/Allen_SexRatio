@@ -1,0 +1,53 @@
+#Model_Hormone_3.txt
+
+# making things too complicated...
+
+# Tomo Eguchi
+# 20 February 2015  Can't figure it out when H is the response... 
+
+model {
+  # lab1
+  for (i in 1:N1){
+    mu_H1[i] ~ dgamma(a1[Sex1[i] + 1], b1[Sex1[i] + 1]) 
+    for (j in 1:2){
+      H1[i,j] ~ dnorm(mu_H1[i], tau_H1)
+    }
+    # prior on sex
+    #Sex1[i] ~ dbern(0.5)
+  }
+
+  # lab 2
+  for (i in 1:N2){
+    mu_H2[i] ~ dgamma(a2[Sex2[i] + 1], b2[Sex2[i] + 1])
+    for (j in 1:2){
+      H2[i,j] ~ dnorm(mu_H2, tau_H2)
+    }
+    #
+    # prior on sex
+    #Sex2[i] ~ dbern(0.5)
+  }
+
+  tau_H1 ~ dgamma(0.1, 0.01)
+  tau_H2 ~ dgamma(0.1, 0.01)
+  #beta0 ~ dnorm(0, 0.1)
+  #beta_Sex ~ dnorm(0, 0.1)
+  #beta_SCL ~ dnorm(0, 0.1)
+  s_H1 <- 1/sqrt(tau_H1)
+  s_H2 <- 1/sqrt(tau_H2)
+  
+  m1M <- a1[1]/b1[1]
+  m2M <- a2[1]/b2[1]
+  m1F <- a1[2]/b1[2]
+  m2F <- a2[2]/b2[2]
+  
+  s1M <- sqrt(a1[1]/(b1[1]^2))
+  s2M <- sqrt(a2[1]/(b2[1]^2))
+  s1F <- sqrt(a1[2]/(b1[2]^2))
+  s2F <- sqrt(a2[2]/(b2[2]^2))
+
+  a1 ~ dunif(0, 10)
+  #a2 ~ dunif(0, 10)
+  #b1 ~ dunif(0, 10)
+  #b2 ~ dunif(0, 10)
+
+}

@@ -1,0 +1,53 @@
+#Model_Hormone_3_SclDOY.txt
+
+# Tomo Eguchi
+# 24 February 2015
+
+model {
+  # SDB
+  for (i in 1:N1){
+    for (d in 1:n1[i]){
+      for (j in 1:2){
+        H1[i, d, j] ~ dnorm(mu_H1[i, d], tau_H1)
+      }
+      mu_H1[i, d] <- beta0 + beta_Sex * Sex1[i] + beta_DOY1 * DOY1[i, d] + beta_Tail * Tail1[i, d]
+      
+    }
+  }
+
+  # because we don't have all sex identifications
+  for (i in 1:N1){
+    Sex1[i] ~ dbern(q)
+  }
+
+  # because of missing tail measurements
+  for (i in 1:N1){
+    for (d in 1:n1[i]){
+      Tail1[i, d] ~ dnorm(mu_tail, tau_tail)
+    }
+  }
+
+  # BDAPAN
+  for (i in 1:N2){
+    for (j in 1:2){
+      H2[i, j] ~ dnorm(mu_H2[i], tau_H1)
+    }
+    
+    mu_H2[i] <- beta0 + beta_Sex * Sex2[i] + beta_DOY2 * DOY2[i] + beta_Tail * Tail2[i]
+  }
+  
+  q ~ dbeta(1,1)
+  mu_tail ~ dnorm(0, 0.1)
+  tau_tail ~ dgamma(0.1, 0.1)
+
+  s_H1 <- 1/sqrt(tau_H1)
+  s_tail <- 1/sqrt(tau_tail)
+
+  tau_H1 ~ dgamma(0.1, 0.01)
+  beta0 ~ dnorm(0, 0.1)
+  beta_Sex ~ dnorm(0, 0.1)
+
+  beta_DOY1 ~ dnorm(0, 0.1)
+  beta_DOY2 ~ dnorm(0, 0.1)
+  beta_Tail ~ dnorm(0, 0.1)
+}

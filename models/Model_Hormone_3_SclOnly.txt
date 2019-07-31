@@ -1,0 +1,40 @@
+#Model_Hormone_3_SclDOY.txt
+
+# Tomo Eguchi
+# 24 February 2015
+
+model {
+  # SDB
+  for (i in 1:N1){
+    for (d in 1:n1[i]){
+      for (j in 1:2){
+        H1[i, d, j] ~ dnorm(mu_H1[i, d], tau_H1)
+      }
+      mu_H1[i, d] <- beta0 + beta_Sex * Sex1[i] + beta_SCL * SCL1[i, d]
+      
+    }
+  }
+
+  # because we don't have all sex identifications
+  for (i in 1:N1){
+    Sex1[i] ~ dbern(q)
+  }
+
+  # BDAPAN
+  for (i in 1:N2){
+    for (j in 1:2){
+      H2[i, j] ~ dnorm(mu_H2[i], tau_H1)
+    }
+    
+    mu_H2[i] <- beta0 + beta_Sex * Sex2[i] + beta_SCL * SCL2[i]
+  }
+  
+  q ~ dbeta(1,1)
+
+  s_H1 <- 1/sqrt(tau_H1)
+
+  tau_H1 ~ dgamma(0.1, 0.01)
+  beta0 ~ dnorm(0, 0.1)
+  beta_Sex ~ dnorm(0, 0.1)
+  beta_SCL ~ dnorm(0, 0.1)
+}
