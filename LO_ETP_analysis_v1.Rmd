@@ -1,0 +1,158 @@
+---
+title: "Analysis of olive ridleys in ETP"
+output: html_notebook
+---
+
+Analysis of hormone data for olive ridleys in ETP
+
+```{r}
+library(jagsUI)
+library(tidyverse)
+library(lubridate)
+
+MCMC.params <- list(n.samples = 50000,
+                    n.burnin = 30000,
+                    n.thin = 5,
+                    n.chains = 5)
+
+```
+
+
+```{r}
+dat.0 <- read.csv(file = "data/EPac_LO_v1.csv")
+
+summary(dat.0)
+```
+
+Filter necessary info:
+
+```{r}
+dat.0 %>% select(Mean.TotalTestosterone_pg_per_mL, Duplicate1_TotalTestosterone_pg_per_mL,
+                 Duplicate2_TotalTestosterone_pg_per_mL, Month, Day, Year, sex,
+                 plastron_to_tip, CCL_SWFSC, LabID) %>%
+  transmute(ID = LabID, Mean.testo = Mean.TotalTestosterone_pg_per_mL,
+            Testo1 = Duplicate1_TotalTestosterone_pg_per_mL,
+            Testo2 = Duplicate2_TotalTestosterone_pg_per_mL,
+            Date = as.Date(paste0(Year, "-", Month, "-", Day)),
+            sex = sex,
+            tail_length = plastron_to_tip,
+            log_Testo1_mean0 = log(Testo1) - mean(log(Testo1)),
+            log_Testo2_mean0 = log(Testo2) - mean(log(Testo2)),
+            sex01 = ifelse(sex == "F", 0,
+                           ifelse(sex == "M", 1, NA))) -> dat.1
+
+summary(dat.1)
+```
+
+
+hormone level is predicted by sex only.
+```{r}
+if (!file.exists("RData/LO_sex.rds")){
+
+  jags.data <- list(H1 = dat.1[, c("log_Testo1_mean0", "log_Testo2_mean0")],
+                    Sex1 = dat.1$sex01,
+                    N1 = nrow(dat.1))
+  
+  MCMC.params$parameters <- c("Sex1", "beta0", "beta_Sex", 
+                              "mu_H1", "sigma_H1", "deviance")
+  
+  MCMC.params$model.file = "models/Model_sex.txt"
+  
+  jm.sex <- jags(data = jags.data,
+                 #inits = inits,
+                 parameters.to.save= MCMC.params$parameters,
+                 model.file = MCMC.params$model.file,
+                 n.chains = MCMC.params$n.chains,
+                 n.burnin = MCMC.params$n.burnin,
+                 n.thin = MCMC.params$n.thin,
+                 n.iter = MCMC.params$n.samples,
+                 DIC = T, 
+                 parallel=T)
+  
+  jm.out <- list(data = jags.data,
+                 params = MCMC.params,
+                 jm.out = jm.sex)
+  
+  saveRDS(jm.out, file = "RData/LO_sex.rds")
+  
+}
+
+```
+
+hormone level is predicted by sex and tail length.
+```{r}
+if (!file.exists("RData/LO_sex_tail.rds")){
+  # use mean for missing tail length:
+  dat.1$tail_length[is.na(dat.1$tail_length)] <- mean(dat.1$tail_length, na.rm = T)
+  
+  jags.data <- list(H1 = dat.1[, c("log_Testo1_mean0", "log_Testo2_mean0")],
+                    Sex1 = dat.1$sex01,
+                    N1 = nrow(dat.1),
+                    tail = dat.1$tail_length)
+  
+  MCMC.params$parameters <- c("Sex1", "beta0", "beta_Sex", 
+                              "beta_T",
+                              "mu_H1", "sigma_H1", "deviance")
+  
+  MCMC.params$model.file = "models/Model_sex_tail.txt"
+  
+  jm <- jags(data = jags.data,
+             #inits = inits,
+             parameters.to.save= MCMC.params$parameters,
+             model.file = MCMC.params$model.file,
+             n.chains = MCMC.params$n.chains,
+             n.burnin = MCMC.params$n.burnin,
+             n.thin = MCMC.params$n.thin,
+             n.iter = MCMC.params$n.samples,
+             DIC = T, 
+             parallel=T)
+  
+  jm.out <- list(data = jags.data,
+                 params = MCMC.params,
+                 jm.out = jm)
+  
+  saveRDS(jm.out, file = "RData/LO_sex_tail.rds")
+  
+}
+
+```
+
+
+
+Compare results:
+```{r}
+sex_only <- readRDS("RData/LO_sex.rds")
+sex_tail <- readRDS("RData/LO_sex_tail.rds")
+DICs <- c(sex_only$jm.out$DIC, sex_tail$jm.out$DIC)
+DICs
+```
+
+The second model is better.  Look at the results:
+
+```{r}
+
+dat.1$pMale <- sex_tail$jm.out$mean$Sex1
+dat.1$log_muH <- sex_tail$jm.out$q50$mu_H1
+
+write.csv(dat.1, file = "data/estimated_sex_Lo_ETP.csv",
+          quote = FALSE, row.names = FALSE)
+```
+
+make some plots:
+
+```{r}
+ggplot() + 
+  geom_point(data = dat.1,
+             aes(x = ID, y = pMale,
+                 size = log(Mean.testo),
+                 color = as.factor(sex01)))
+```
+
+
+```{r}
+ggplot() +
+  geom_point(data = dat.1,
+             aes(x = log_muH, y = pMale,
+                 color = as.factor(sex01)))
+```
+

@@ -1,0 +1,28 @@
+#Model_sex.txt
+
+# Tomo Eguchi
+# 24 February 2015
+# 27 September 2019 converted for ETP Lo analysis
+
+model {
+  for (i in 1:N1){
+      for (j in 1:2){
+        H1[i, j] ~ dnorm(mu_H1[i], tau_H1)
+      }
+      mu_H1[i] <- beta0 + beta_Sex * Sex1[i]
+      
+  }
+
+  # because we don't have all sex identifications
+  for (i in 1:N1){
+    Sex1[i] ~ dbern(q)
+  }
+
+  q ~ dbeta(1,1)
+
+  sigma_H1 <- 1/sqrt(tau_H1)
+
+  tau_H1 ~ dgamma(0.1, 0.01)
+  beta0 ~ dnorm(0, 0.1)
+  beta_Sex ~ dnorm(0, 0.1)
+}
