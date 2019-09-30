@@ -19,7 +19,7 @@ MCMC.params <- list(n.samples = 50000,
 
 
 ```{r}
-dat.0 <- read.csv(file = "data/EPac_LO_v1.csv")
+dat.0 <- read.csv(file = "data/EPac_LO_v2.csv")
 
 summary(dat.0)
 ```
@@ -47,7 +47,7 @@ summary(dat.1)
 
 hormone level is predicted by sex only.
 ```{r}
-if (!file.exists("RData/LO_sex.rds")){
+if (!file.exists("RData/LO_sex_v2.rds")){
 
   jags.data <- list(H1 = dat.1[, c("log_Testo1_mean0", "log_Testo2_mean0")],
                     Sex1 = dat.1$sex01,
@@ -73,7 +73,7 @@ if (!file.exists("RData/LO_sex.rds")){
                  params = MCMC.params,
                  jm.out = jm.sex)
   
-  saveRDS(jm.out, file = "RData/LO_sex.rds")
+  saveRDS(jm.out, file = "RData/LO_sex_v2.rds")
   
 }
 
@@ -81,7 +81,7 @@ if (!file.exists("RData/LO_sex.rds")){
 
 hormone level is predicted by sex and tail length.
 ```{r}
-if (!file.exists("RData/LO_sex_tail.rds")){
+if (!file.exists("RData/LO_sex_tail_v2.rds")){
   # use mean for missing tail length:
   dat.1$tail_length[is.na(dat.1$tail_length)] <- mean(dat.1$tail_length, na.rm = T)
   
@@ -111,7 +111,7 @@ if (!file.exists("RData/LO_sex_tail.rds")){
                  params = MCMC.params,
                  jm.out = jm)
   
-  saveRDS(jm.out, file = "RData/LO_sex_tail.rds")
+  saveRDS(jm.out, file = "RData/LO_sex_tail_v2.rds")
   
 }
 
@@ -121,8 +121,8 @@ if (!file.exists("RData/LO_sex_tail.rds")){
 
 Compare results:
 ```{r}
-sex_only <- readRDS("RData/LO_sex.rds")
-sex_tail <- readRDS("RData/LO_sex_tail.rds")
+sex_only <- readRDS("RData/LO_sex_v2.rds")
+sex_tail <- readRDS("RData/LO_sex_tail_v2.rds")
 DICs <- c(sex_only$jm.out$DIC, sex_tail$jm.out$DIC)
 DICs
 ```
@@ -134,7 +134,7 @@ The second model is better.  Look at the results:
 dat.1$pMale <- sex_tail$jm.out$mean$Sex1
 dat.1$log_muH <- sex_tail$jm.out$q50$mu_H1
 
-write.csv(dat.1, file = "data/estimated_sex_Lo_ETP.csv",
+write.csv(dat.1, file = "data/estimated_sex_Lo_ETP_v2.csv",
           quote = FALSE, row.names = FALSE)
 ```
 
